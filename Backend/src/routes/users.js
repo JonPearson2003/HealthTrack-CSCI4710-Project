@@ -19,13 +19,14 @@ router.get('/', async (req, res) => {
 
 // POST create user
 router.post('/', async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, role } = req.body;
   const hashedPassword = await bcryptjs.hash(password, 10);
+  const userRole = role === 'Admin' ? 'Admin' : 'Standard';
 
   try {
     const result = await pool.query(
-      'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *',
-      [username, email, hashedPassword]
+      'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *',
+      [username, email, hashedPassword, userRole]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -39,7 +40,7 @@ router.post('/login', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT id, username, email, password FROM users WHERE username = $1 OR email = $2',
+      'SELECT id, username, email, password, role FROM users WHERE username = $1 OR email = $2',
       [username, email]
     );
     if (result.rows.length === 0) {
@@ -71,7 +72,8 @@ router.post('/login', async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        role: user.role
       }
     });
 
@@ -85,7 +87,7 @@ router.post('/login', async (req, res) => {
 router.get('/session', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT s.*, u.username, u.email FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.user_id = $1 AND s.expires_at > NOW() ORDER BY s.created_at DESC LIMIT 1',
+      'SELECT s.*, u.username, u.email, u.role FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.user_id = $1 AND s.expires_at > NOW() ORDER BY s.created_at DESC LIMIT 1',
       [req.user.userId]
     );
     if (result.rows.length === 0) {
