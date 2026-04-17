@@ -7,8 +7,10 @@ const router = express.Router();
 
 // GET all items (habits + workouts) for Logged in user
 router.get('/', authMiddleware, async (req, res) => {
+    console.log("HOME ROUTE HIT"); 
   try {
     const userId = req.user.userId; // this is your logged-in user
+    console.log("USER ID:", userId);
     const result = await pool.query(`
         SELECT h.Habit_title AS name
         FROM Habits h
@@ -24,6 +26,8 @@ router.get('/', authMiddleware, async (req, res) => {
 
         ORDER BY name;
         `, [userId]);
+
+        console.log("RESULT:", result.rows); 
     res.json(result.rows);
   } catch (err) {
     console.error(err);

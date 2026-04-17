@@ -39,7 +39,7 @@ router.post('/login', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT password FROM users WHERE username = $1 OR email = $2',
+      'SELECT id, username, email, password FROM users WHERE username = $1 OR email = $2',
       [username, email]
     );
     if (result.rows.length === 0) {
@@ -58,7 +58,7 @@ router.post('/login', async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ error: 'Incorrect password' });
     }
-
+    console.log("LOGIN USER:", user);
     const token = jwt.sign(
       { userId: user.id },
       'your_secret_key', // move to .env later
