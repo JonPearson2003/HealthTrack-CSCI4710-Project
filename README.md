@@ -85,3 +85,75 @@ A fitness and habit-tracking web application to help users maintain consistency 
 | POST | `/todo/daily-log` | Toggle habit completion (requires auth) |
 
 **Authentication:** Include JWT in header: `Authorization: Bearer <token>`
+
+---
+
+## Frontend Setup
+
+1. **Install dependencies:**
+   ```bash
+   cd Frontend
+   npm install
+   ```
+
+2. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+   Frontend runs at `http://localhost:5173`
+
+---
+
+## Running the Application
+
+1. Start PostgreSQL: `sudo service postgresql start`
+2. Start Backend: `cd Backend && npm start`
+3. Start Frontend: `cd Frontend && npm run dev`
+
+### Demo Account
+- **Username:** demo
+- **Password:** demo123
+
+### Creating an Admin User
+After registering, update the user's role in the database:
+```sql
+UPDATE users SET role = 'Admin' WHERE username = 'your_username';
+```
+
+---
+
+## Project Structure
+
+```
+HealthTrack/
+├── Backend/
+│   ├── src/
+│   │   ├── server.js      # Express server
+│   │   ├── db.js        # PostgreSQL connection
+│   │   ├── auth.js     # JWT middleware
+│   │   └── routes/
+│   │       ├── users.js   # User endpoints
+│   │       ├── todo.js  # Habits/Workouts endpoints
+│   │       └── home.js # Home dashboard
+│   ├── schema.sql
+│   └── package.json
+├── Frontend/
+│   ├── src/
+│   │   ├── main.jsx          # App entry
+│   │   ├── App.jsx           # Routes
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx # Auth state
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx
+│   │   │   └── ProtectedRoute.jsx
+│   │   └── pages/
+│   │       ├── Login.jsx
+│   │       ├── SignUp.jsx
+│   │       ├── Dashboard.jsx
+│   │       ├── HabitManager.jsx
+│   │       ├── WorkoutHistory.jsx
+│   │       ├── Admin.jsx
+│   │       └── Profile.jsx
+│   └── package.json
+└── README.md
+```

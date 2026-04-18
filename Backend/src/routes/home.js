@@ -5,24 +5,23 @@ import { authMiddleware } from '../auth.js';
 
 const router = express.Router();
 
-// GET all items (habits + workouts) for Logged in user
 router.get('/', authMiddleware, async (req, res) => {
     console.log("HOME ROUTE HIT"); 
   try {
-    const userId = req.user.userId; // this is your logged-in user
+    const userId = req.user.userId;
     console.log("USER ID:", userId);
     const result = await pool.query(`
-        SELECT h.Habit_title AS name
-        FROM Habits h
-        JOIN User_Habits uh ON h.Id = uh.Habit_id
-        WHERE uh.User_id = $1
+        SELECT h.habit_title AS name
+        FROM habits h
+        JOIN user_habits uh ON h.id = uh.habit_id
+        WHERE uh.user_id = $1
 
         UNION
 
-        SELECT w.Exercise_name AS name
-        FROM Workouts w
-        JOIN User_Workouts uw ON w.Id = uw.Workout_id
-        WHERE uw.User_id = $1
+        SELECT w.exercise_name AS name
+        FROM workouts w
+        JOIN user_workouts uw ON w.id = uw.workout_id
+        WHERE uw.user_id = $1
 
         ORDER BY name;
         `, [userId]);
