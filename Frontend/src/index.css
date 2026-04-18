@@ -1,0 +1,221 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  line-height: 1.6;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.navbar {
+  background: #2c3e50;
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  margin-left: 1.5rem;
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+}
+
+.nav-brand a {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-left: 0;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+
+.nav-links button {
+  margin-left: 1.5rem;
+  background: #e74c3c;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.auth-page {
+  max-width: 400px;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.auth-page h1 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.auth-page form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-page input {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.auth-page button {
+  padding: 0.75rem;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.auth-page button:hover {
+  background: #2980b9;
+}
+
+.auth-page .error {
+  color: #e74c3c;
+  text-align: center;
+}
+
+.auth-page p {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.dashboard, .habit-manager, .workout-history, .admin-page, .profile-page {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.dashboard h1, .habit-manager h1, .workout-history h1, .admin-page h1, .profile-page h1 {
+  margin-bottom: 1.5rem;
+}
+
+.summary-card {
+  background: #ecf0f1;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.habits-section, .workouts-section {
+  margin-bottom: 2rem;
+}
+
+.habits-section h2, .workouts-section h2 {
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.habits-section ul, .workouts-section ul {
+  list-style: none;
+}
+
+.habits-section li, .workouts-section li {
+  padding: 0.75rem;
+  border-bottom: 1px solid #ecf0f1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.habits-section li input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+}
+
+.habit-manager button, .workout-history button, .admin-page button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.habit-manager form, .workout-history form, .admin-page form {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.habit-manager input, .workout-history input, .admin-page input, 
+.habit-manager select, .workout-history select, .admin-page select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.admin-page .section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border: 1px solid #ecf0f1;
+  border-radius: 4px;
+}
+
+.profile-info {
+  margin: 1.5rem 0;
+}
+
+.profile-info p {
+  margin: 0.5rem 0;
+}
+
+.logout-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.5rem;
+  color: #666;
+}
