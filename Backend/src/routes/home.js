@@ -5,7 +5,7 @@ import { authMiddleware } from '../auth.js';
 
 const router = express.Router();
 
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, async (req, res, next) => {
     console.log("HOME ROUTE HIT"); 
   try {
     const userId = req.user.userId;
@@ -28,8 +28,7 @@ router.get('/', authMiddleware, async (req, res) => {
         console.log("RESULT:", result.rows); 
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 

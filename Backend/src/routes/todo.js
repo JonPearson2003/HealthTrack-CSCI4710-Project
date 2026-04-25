@@ -33,18 +33,17 @@ function parsePositiveIntOrNull(value) {
 }
 
 // GET exercise library summary (Admin only)
-router.get('/', authMiddleware, requireAdmin, async (req, res) => {
+router.get('/', authMiddleware, requireAdmin, async (req, res, next) => {
   try {
     const result = await pool.query('SELECT exercise_name AS name FROM workouts ORDER BY name ASC;');
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // GET admin dashboard metrics (Admin only)
-router.get('/admin/metrics', authMiddleware, requireAdmin, async (req, res) => {
+router.get('/admin/metrics', authMiddleware, requireAdmin, async (req, res, next) => {
   try {
     const [usersResult, workoutsResult, dailyLogsResult] = await Promise.all([
       pool.query('SELECT COUNT(*)::int AS count FROM users'),
@@ -58,15 +57,14 @@ router.get('/admin/metrics', authMiddleware, requireAdmin, async (req, res) => {
       dailyLogsCount: dailyLogsResult.rows[0].count
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // ============ HABITS ============
 
 // GET current user's habits
-router.get('/habits', authMiddleware, async (req, res) => {
+router.get('/habits', authMiddleware, async (req, res, next) => {
   try {
     const result = await pool.query(
       'SELECT * FROM habits WHERE user_id = $1 ORDER BY created_at DESC',
@@ -74,13 +72,12 @@ router.get('/habits', authMiddleware, async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // POST create habit for current user
-router.post('/habits', authMiddleware, async (req, res) => {
+router.post('/habits', authMiddleware, async (req, res, next) => {
   const title = toTrimmedString(req.body?.title);
   const frequency = toTrimmedString(req.body?.frequency || 'daily').toLowerCase();
 
@@ -103,13 +100,12 @@ router.post('/habits', authMiddleware, async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // PUT update habit
-router.put('/habits/:id', authMiddleware, async (req, res) => {
+router.put('/habits/:id', authMiddleware, async (req, res, next) => {
   const id = parsePositiveInt(req.params.id);
   const hasTitle = req.body?.title !== undefined;
   const hasFrequency = req.body?.frequency !== undefined;
@@ -137,15 +133,17 @@ router.put('/habits/:id', authMiddleware, async (req, res) => {
       'UPDATE habits SET habit_title = COALESCE($1, habit_title), frequency = COALESCE($2, frequency) WHERE id = $3 AND user_id = $4 RETURNING *',
       [title, frequency, id, req.user.userId]
     );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Habit not found' });
+    }
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // DELETE habit
-router.delete('/habits/:id', authMiddleware, async (req, res) => {
+router.delete('/habits/:id', authMiddleware, async (req, res, next) => {
   const id = parsePositiveInt(req.params.id);
 
   if (!id) {
@@ -153,29 +151,30 @@ router.delete('/habits/:id', authMiddleware, async (req, res) => {
   }
 
   try {
-    await pool.query('DELETE FROM habits WHERE id = $1 AND user_id = $2', [id, req.user.userId]);
+    const result = await pool.query('DELETE FROM habits WHERE id = $1 AND user_id = $2 RETURNING id', [id, req.user.userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Habit not found' });
+    }
     res.json({ message: 'Habit deleted' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // ============ WORKOUTS (Exercise Library) ============
 
 // GET all workouts (global exercise library)
-router.get('/workouts', async (req, res) => {
+router.get('/workouts', async (req, res, next) => {
   try {
     const result = await pool.query('SELECT * FROM workouts ORDER BY created_at DESC');
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // POST create workout (Admin only)
-router.post('/workouts', authMiddleware, requireAdmin, async (req, res) => {
+router.post('/workouts', authMiddleware, requireAdmin, async (req, res, next) => {
   const title = toTrimmedString(req.body?.title);
   const description = req.body?.description === undefined || req.body?.description === null
     ? null
@@ -200,13 +199,12 @@ router.post('/workouts', authMiddleware, requireAdmin, async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // PUT update workout
-router.put('/workouts/:id', authMiddleware, requireAdmin, async (req, res) => {
+router.put('/workouts/:id', authMiddleware, requireAdmin, async (req, res, next) => {
   const id = parsePositiveInt(req.params.id);
   const hasTitle = req.body?.title !== undefined;
   const hasDescription = req.body?.description !== undefined;
@@ -236,15 +234,17 @@ router.put('/workouts/:id', authMiddleware, requireAdmin, async (req, res) => {
       'UPDATE workouts SET exercise_name = COALESCE($1, exercise_name), description = COALESCE($2, description) WHERE id = $3 RETURNING *',
       [title, description, id]
     );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Workout not found' });
+    }
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // DELETE workout (Admin only)
-router.delete('/workouts/:id', authMiddleware, requireAdmin, async (req, res) => {
+router.delete('/workouts/:id', authMiddleware, requireAdmin, async (req, res, next) => {
   const id = parsePositiveInt(req.params.id);
 
   if (!id) {
@@ -252,18 +252,20 @@ router.delete('/workouts/:id', authMiddleware, requireAdmin, async (req, res) =>
   }
 
   try {
-    await pool.query('DELETE FROM workouts WHERE id = $1', [id]);
+    const result = await pool.query('DELETE FROM workouts WHERE id = $1 RETURNING id', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Workout not found' });
+    }
     res.json({ message: 'Workout deleted' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // ============ USER HABITS ============
 
 // GET user's habits
-router.get('/my-habits', authMiddleware, async (req, res) => {
+router.get('/my-habits', authMiddleware, async (req, res, next) => {
   try {
     const result = await pool.query(
       'SELECT * FROM habits WHERE user_id = $1 ORDER BY created_at DESC',
@@ -271,13 +273,12 @@ router.get('/my-habits', authMiddleware, async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // POST create habit for user
-router.post('/my-habits', authMiddleware, async (req, res) => {
+router.post('/my-habits', authMiddleware, async (req, res, next) => {
   const title = toTrimmedString(req.body?.title);
   const frequency = toTrimmedString(req.body?.frequency || 'daily').toLowerCase();
 
@@ -300,13 +301,12 @@ router.post('/my-habits', authMiddleware, async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // DELETE remove habit from user
-router.delete('/my-habits/:id', authMiddleware, async (req, res) => {
+router.delete('/my-habits/:id', authMiddleware, async (req, res, next) => {
   const id = parsePositiveInt(req.params.id);
 
   if (!id) {
@@ -314,18 +314,20 @@ router.delete('/my-habits/:id', authMiddleware, async (req, res) => {
   }
 
   try {
-    await pool.query('DELETE FROM habits WHERE id = $1 AND user_id = $2', [id, req.user.userId]);
+    const result = await pool.query('DELETE FROM habits WHERE id = $1 AND user_id = $2 RETURNING id', [id, req.user.userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Habit not found' });
+    }
     res.json({ message: 'Habit removed' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // ============ USER WORKOUTS ============
 
 // GET user's workout history
-router.get('/my-workouts', authMiddleware, async (req, res) => {
+router.get('/my-workouts', authMiddleware, async (req, res, next) => {
   try {
     const result = await pool.query(
       'SELECT uw.*, w.exercise_name, w.description FROM user_workouts uw JOIN workouts w ON uw.workout_id = w.id WHERE uw.user_id = $1 ORDER BY uw.completed_at DESC',
@@ -333,13 +335,12 @@ router.get('/my-workouts', authMiddleware, async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // POST log workout
-router.post('/my-workouts', authMiddleware, async (req, res) => {
+router.post('/my-workouts', authMiddleware, async (req, res, next) => {
   const workoutId = parsePositiveInt(req.body?.workout_id);
   const reps = parsePositiveIntOrNull(req.body?.reps);
   const sets = parsePositiveIntOrNull(req.body?.sets);
@@ -362,21 +363,25 @@ router.post('/my-workouts', authMiddleware, async (req, res) => {
   }
 
   try {
+    const workoutExists = await pool.query('SELECT id FROM workouts WHERE id = $1 LIMIT 1', [workoutId]);
+    if (workoutExists.rows.length === 0) {
+      return res.status(404).json({ error: 'Workout not found' });
+    }
+
     const result = await pool.query(
       'INSERT INTO user_workouts (user_id, workout_id, reps, sets, weight) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [req.user.userId, workoutId, reps, sets, weight]
     );
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // ============ DAILY LOGS ============
 
 // GET today's habits with completion status
-router.get('/daily-log', authMiddleware, async (req, res) => {
+router.get('/daily-log', authMiddleware, async (req, res, next) => {
   try {
     const result = await pool.query(
       `SELECT h.id, h.habit_title, h.frequency, dl.completed, dl.log_date
@@ -387,13 +392,12 @@ router.get('/daily-log', authMiddleware, async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // POST toggle habit completion
-router.post('/daily-log', authMiddleware, async (req, res) => {
+router.post('/daily-log', authMiddleware, async (req, res, next) => {
   const habitId = parsePositiveInt(req.body?.habit_id);
   const completed = req.body?.completed;
 
@@ -406,6 +410,14 @@ router.post('/daily-log', authMiddleware, async (req, res) => {
   }
 
   try {
+    const habitExists = await pool.query(
+      'SELECT id FROM habits WHERE id = $1 AND user_id = $2 LIMIT 1',
+      [habitId, req.user.userId]
+    );
+    if (habitExists.rows.length === 0) {
+      return res.status(404).json({ error: 'Habit not found' });
+    }
+
     const result = await pool.query(
       `INSERT INTO daily_logs (user_id, habit_id, completed, log_date)
        VALUES ($1, $2, $3, CURRENT_DATE)
@@ -416,14 +428,17 @@ router.post('/daily-log', authMiddleware, async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // GET habit history
-router.get('/habits/:id/history', authMiddleware, async (req, res) => {
-  const { id } = req.params;
+router.get('/habits/:id/history', authMiddleware, async (req, res, next) => {
+  const id = parsePositiveInt(req.params.id);
+
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid habit id' });
+  }
 
   try {
     const result = await pool.query(
@@ -437,8 +452,7 @@ router.get('/habits/:id/history', authMiddleware, async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
