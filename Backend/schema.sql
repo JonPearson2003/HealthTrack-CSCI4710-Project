@@ -15,8 +15,12 @@ CREATE TABLE IF NOT EXISTS habits (
     id SERIAL PRIMARY KEY,
     habit_title VARCHAR(255) NOT NULL,
     frequency VARCHAR(50) DEFAULT 'daily' CHECK (frequency IN ('daily', 'weekly', 'monthly')),
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE IF EXISTS habits
+    ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 
 -- Workouts table (Exercise Library)
 CREATE TABLE IF NOT EXISTS workouts (

@@ -1,13 +1,13 @@
 import express from 'express';
 import pool from '../db.js';
-import { authMiddleware } from '../auth.js';
+import { authMiddleware, requireAdmin } from '../auth.js';
 
 const router = express.Router();
 
-// GET all items (habits + workouts) - Admin only
-router.get('/', authMiddleware, async (req, res) => {
+// GET exercise library summary (Admin only)
+router.get('/', authMiddleware, requireAdmin, async (req, res) => {
   try {
-    const result = await pool.query('SELECT habit_title AS name FROM habits UNION SELECT exercise_name AS name FROM workouts ORDER BY name ASC;');
+    const result = await pool.query('SELECT exercise_name AS name FROM workouts ORDER BY name ASC;');
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -17,10 +17,13 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // ============ HABITS ============
 
-// GET all habits (global library)
-router.get('/habits', async (req, res) => {
+// GET current user's habits
+router.get('/habits', authMiddleware, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM habits ORDER BY created_at DESC');
+    const result = await pool.query(
+      'SELECT * FROM habits WHERE user_id = $1 ORDER BY created_at DESC',
+      [req.user.userId]
+    );
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -28,14 +31,14 @@ router.get('/habits', async (req, res) => {
   }
 });
 
-// POST create habit (Admin only)
+// POST create habit for current user
 router.post('/habits', authMiddleware, async (req, res) => {
   const { title, frequency } = req.body;
 
   try {
     const result = await pool.query(
-      'INSERT INTO habits (habit_title, frequency) VALUES ($1, $2) RETURNING *',
-      [title, frequency || 'daily']
+      'INSERT INTO habits (habit_title, frequency, user_id) VALUES ($1, $2, $3) RETURNING *',
+      [title, frequency || 'daily', req.user.userId]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -51,8 +54,8 @@ router.put('/habits/:id', authMiddleware, async (req, res) => {
 
   try {
     const result = await pool.query(
-      'UPDATE habits SET habit_title = COALESCE($1, habit_title), frequency = COALESCE($2, frequency) WHERE id = $3 RETURNING *',
-      [title, frequency, id]
+      'UPDATE habits SET habit_title = COALESCE($1, habit_title), frequency = COALESCE($2, frequency) WHERE id = $3 AND user_id = $4 RETURNING *',
+      [title, frequency, id, req.user.userId]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -66,7 +69,7 @@ router.delete('/habits/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
 
   try {
-    await pool.query('DELETE FROM habits WHERE id = $1', [id]);
+    await pool.query('DELETE FROM habits WHERE id = $1 AND user_id = $2', [id, req.user.userId]);
     res.json({ message: 'Habit deleted' });
   } catch (err) {
     console.error(err);
@@ -88,7 +91,7 @@ router.get('/workouts', async (req, res) => {
 });
 
 // POST create workout (Admin only)
-router.post('/workouts', authMiddleware, async (req, res) => {
+router.post('/workouts', authMiddleware, requireAdmin, async (req, res) => {
   const { title, description } = req.body;
 
   try {
@@ -104,7 +107,7 @@ router.post('/workouts', authMiddleware, async (req, res) => {
 });
 
 // PUT update workout
-router.put('/workouts/:id', authMiddleware, async (req, res) => {
+router.put('/workouts/:id', authMiddleware, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { title, description } = req.body;
 
@@ -121,7 +124,7 @@ router.put('/workouts/:id', authMiddleware, async (req, res) => {
 });
 
 // DELETE workout (Admin only)
-router.delete('/workouts/:id', authMiddleware, async (req, res) => {
+router.delete('/workouts/:id', authMiddleware, requireAdmin, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -135,11 +138,11 @@ router.delete('/workouts/:id', authMiddleware, async (req, res) => {
 
 // ============ USER HABITS ============
 
-// GET user's assigned habits
+// GET user's habits
 router.get('/my-habits', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT h.*, uh.created_at as assigned_at FROM habits h JOIN user_habits uh ON h.id = uh.habit_id WHERE uh.user_id = $1 ORDER BY uh.created_at DESC',
+      'SELECT * FROM habits WHERE user_id = $1 ORDER BY created_at DESC',
       [req.user.userId]
     );
     res.json(result.rows);
@@ -149,14 +152,14 @@ router.get('/my-habits', authMiddleware, async (req, res) => {
   }
 });
 
-// POST assign habit to user
+// POST create habit for user
 router.post('/my-habits', authMiddleware, async (req, res) => {
-  const { habit_id } = req.body;
+  const { title, frequency } = req.body;
 
   try {
     const result = await pool.query(
-      'INSERT INTO user_habits (user_id, habit_id) VALUES ($1, $2) RETURNING *',
-      [req.user.userId, habit_id]
+      'INSERT INTO habits (habit_title, frequency, user_id) VALUES ($1, $2, $3) RETURNING *',
+      [title, frequency || 'daily', req.user.userId]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -170,7 +173,7 @@ router.delete('/my-habits/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
 
   try {
-    await pool.query('DELETE FROM user_habits WHERE id = $1 AND user_id = $2', [id, req.user.userId]);
+    await pool.query('DELETE FROM habits WHERE id = $1 AND user_id = $2', [id, req.user.userId]);
     res.json({ message: 'Habit removed' });
   } catch (err) {
     console.error(err);
@@ -218,9 +221,8 @@ router.get('/daily-log', authMiddleware, async (req, res) => {
     const result = await pool.query(
       `SELECT h.id, h.habit_title, h.frequency, dl.completed, dl.log_date
        FROM habits h
-       JOIN user_habits uh ON h.id = uh.habit_id
-       LEFT JOIN daily_logs dl ON h.id = dl.habit_id AND dl.user_id = uh.user_id AND dl.log_date = CURRENT_DATE
-       WHERE uh.user_id = $1`,
+       LEFT JOIN daily_logs dl ON h.id = dl.habit_id AND dl.user_id = h.user_id AND dl.log_date = CURRENT_DATE
+       WHERE h.user_id = $1`,
       [req.user.userId]
     );
     res.json(result.rows);
@@ -256,7 +258,12 @@ router.get('/habits/:id/history', authMiddleware, async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT * FROM daily_logs WHERE habit_id = $1 AND user_id = $2 ORDER BY log_date DESC LIMIT 30',
+      `SELECT dl.*
+       FROM daily_logs dl
+       JOIN habits h ON h.id = dl.habit_id
+       WHERE dl.habit_id = $1 AND dl.user_id = $2 AND h.user_id = $2
+       ORDER BY dl.log_date DESC
+       LIMIT 30`,
       [id, req.user.userId]
     );
     res.json(result.rows);

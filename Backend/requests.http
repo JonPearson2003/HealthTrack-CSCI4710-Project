@@ -1,4 +1,5 @@
 GET http://localhost:3000/users
+Authorization: Bearer ADMIN_TOKEN_HERE
 Accept: application/json
 ###
 
@@ -31,10 +32,12 @@ Accept: application/json
 ###
 
 GET http://localhost:3000/todo/habits
+Authorization: Bearer YOUR_TOKEN_HERE
 Accept: application/json
 ###
 
 POST http://localhost:3000/todo/habits
+Authorization: Bearer YOUR_TOKEN_HERE
 Content-Type: application/json
 
 {
@@ -47,6 +50,7 @@ Accept: application/json
 ###
 
 POST http://localhost:3000/todo/workouts
+Authorization: Bearer ADMIN_TOKEN_HERE
 Content-Type: application/json
 
 {
@@ -54,25 +58,9 @@ Content-Type: application/json
 }
 ###
 
-POST http://localhost:3000/todo/set_workouts
-Content-Type: application/json
-
-{
-  "user_id": 1,
-  "workout_id": 4,
-  "reps": 10,
-  "sets": 3,
-  "weight": 150
-}
-###
-
-POST http://localhost:3000/todo/set_habits
-Content-Type: application/json
-
-{
-  "user_id": 1,
-  "habit_id": 2
-}
+GET http://localhost:3000/todo/admin/metrics
+Authorization: Bearer ADMIN_TOKEN_HERE
+Accept: application/json
 ###
 
 # HOME TESTS

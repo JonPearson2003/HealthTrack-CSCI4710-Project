@@ -2,12 +2,12 @@ import express from 'express';
 import pool from '../db.js';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { authMiddleware } from '../auth.js';
+import { authMiddleware, requireAdmin } from '../auth.js';
 
 const router = express.Router();
 
 // GET all users
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users');
     res.json(result.rows);
@@ -19,9 +19,9 @@ router.get('/', async (req, res) => {
 
 // POST create user
 router.post('/', async (req, res) => {
-  const { username, email, password, role } = req.body;
+  const { username, email, password } = req.body;
   const hashedPassword = await bcryptjs.hash(password, 10);
-  const userRole = role === 'Admin' ? 'Admin' : 'Standard';
+  const userRole = 'Standard';
 
   try {
     const result = await pool.query(
