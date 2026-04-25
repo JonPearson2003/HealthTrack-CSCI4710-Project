@@ -5,6 +5,11 @@ import jwt from 'jsonwebtoken';
 import { authMiddleware, requireAdmin } from '../auth.js';
 
 const router = express.Router();
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function normalizeString(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
 
 // GET all users
 router.get('/', authMiddleware, requireAdmin, async (req, res) => {
@@ -19,10 +24,24 @@ router.get('/', authMiddleware, requireAdmin, async (req, res) => {
 
 // POST create user
 router.post('/', async (req, res) => {
-  const { username, email, password } = req.body;
+  const username = normalizeString(req.body?.username);
+  const email = normalizeString(req.body?.email).toLowerCase();
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
   if (!username || !email || !password) {
     return res.status(400).json({ error: 'username, email, and password are required' });
+  }
+
+  if (username.length < 3 || username.length > 30) {
+    return res.status(400).json({ error: 'Username must be 3-30 characters' });
+  }
+
+  if (!EMAIL_REGEX.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+
+  if (password.length < 8 || password.length > 72) {
+    return res.status(400).json({ error: 'Password must be 8-72 characters' });
   }
 
   const hashedPassword = await bcryptjs.hash(password, 10);
@@ -46,10 +65,20 @@ router.post('/', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-  const { username, email, password } = req.body;
+  const username = normalizeString(req.body?.username);
+  const email = normalizeString(req.body?.email).toLowerCase();
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
   if ((!username && !email) || !password) {
     return res.status(400).json({ error: 'Provide username or email, and password' });
+  }
+
+  if (email && !EMAIL_REGEX.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+
+  if (password.length < 8 || password.length > 72) {
+    return res.status(400).json({ error: 'Password must be 8-72 characters' });
   }
 
   try {
