@@ -3,6 +3,34 @@ import pool from '../db.js';
 import { authMiddleware, requireAdmin } from '../auth.js';
 
 const router = express.Router();
+const ALLOWED_FREQUENCIES = new Set(['daily', 'weekly', 'monthly']);
+
+function toTrimmedString(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function parsePositiveInt(value) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function parseNonNegativeNumber(value) {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function parsePositiveIntOrNull(value) {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
 
 // GET exercise library summary (Admin only)
 router.get('/', authMiddleware, requireAdmin, async (req, res) => {
@@ -53,12 +81,25 @@ router.get('/habits', authMiddleware, async (req, res) => {
 
 // POST create habit for current user
 router.post('/habits', authMiddleware, async (req, res) => {
-  const { title, frequency } = req.body;
+  const title = toTrimmedString(req.body?.title);
+  const frequency = toTrimmedString(req.body?.frequency || 'daily').toLowerCase();
+
+  if (!title) {
+    return res.status(400).json({ error: 'title is required' });
+  }
+
+  if (title.length > 120) {
+    return res.status(400).json({ error: 'title must be 1-120 characters' });
+  }
+
+  if (!ALLOWED_FREQUENCIES.has(frequency)) {
+    return res.status(400).json({ error: 'frequency must be daily, weekly, or monthly' });
+  }
 
   try {
     const result = await pool.query(
       'INSERT INTO habits (habit_title, frequency, user_id) VALUES ($1, $2, $3) RETURNING *',
-      [title, frequency || 'daily', req.user.userId]
+      [title, frequency, req.user.userId]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -69,8 +110,27 @@ router.post('/habits', authMiddleware, async (req, res) => {
 
 // PUT update habit
 router.put('/habits/:id', authMiddleware, async (req, res) => {
-  const { id } = req.params;
-  const { title, frequency } = req.body;
+  const id = parsePositiveInt(req.params.id);
+  const hasTitle = req.body?.title !== undefined;
+  const hasFrequency = req.body?.frequency !== undefined;
+  const title = hasTitle ? toTrimmedString(req.body.title) : null;
+  const frequency = hasFrequency ? toTrimmedString(req.body.frequency).toLowerCase() : null;
+
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid habit id' });
+  }
+
+  if (!hasTitle && !hasFrequency) {
+    return res.status(400).json({ error: 'Provide title or frequency to update' });
+  }
+
+  if (hasTitle && (!title || title.length > 120)) {
+    return res.status(400).json({ error: 'title must be 1-120 characters' });
+  }
+
+  if (hasFrequency && !ALLOWED_FREQUENCIES.has(frequency)) {
+    return res.status(400).json({ error: 'frequency must be daily, weekly, or monthly' });
+  }
 
   try {
     const result = await pool.query(
@@ -86,7 +146,11 @@ router.put('/habits/:id', authMiddleware, async (req, res) => {
 
 // DELETE habit
 router.delete('/habits/:id', authMiddleware, async (req, res) => {
-  const { id } = req.params;
+  const id = parsePositiveInt(req.params.id);
+
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid habit id' });
+  }
 
   try {
     await pool.query('DELETE FROM habits WHERE id = $1 AND user_id = $2', [id, req.user.userId]);
@@ -112,7 +176,22 @@ router.get('/workouts', async (req, res) => {
 
 // POST create workout (Admin only)
 router.post('/workouts', authMiddleware, requireAdmin, async (req, res) => {
-  const { title, description } = req.body;
+  const title = toTrimmedString(req.body?.title);
+  const description = req.body?.description === undefined || req.body?.description === null
+    ? null
+    : toTrimmedString(req.body.description);
+
+  if (!title) {
+    return res.status(400).json({ error: 'title is required' });
+  }
+
+  if (title.length > 120) {
+    return res.status(400).json({ error: 'title must be 1-120 characters' });
+  }
+
+  if (description !== null && description.length > 1000) {
+    return res.status(400).json({ error: 'description must be 1000 characters or fewer' });
+  }
 
   try {
     const result = await pool.query(
@@ -128,8 +207,29 @@ router.post('/workouts', authMiddleware, requireAdmin, async (req, res) => {
 
 // PUT update workout
 router.put('/workouts/:id', authMiddleware, requireAdmin, async (req, res) => {
-  const { id } = req.params;
-  const { title, description } = req.body;
+  const id = parsePositiveInt(req.params.id);
+  const hasTitle = req.body?.title !== undefined;
+  const hasDescription = req.body?.description !== undefined;
+  const title = hasTitle ? toTrimmedString(req.body.title) : null;
+  const description = hasDescription
+    ? (req.body.description === null ? null : toTrimmedString(req.body.description))
+    : null;
+
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid workout id' });
+  }
+
+  if (!hasTitle && !hasDescription) {
+    return res.status(400).json({ error: 'Provide title or description to update' });
+  }
+
+  if (hasTitle && (!title || title.length > 120)) {
+    return res.status(400).json({ error: 'title must be 1-120 characters' });
+  }
+
+  if (hasDescription && description !== null && description.length > 1000) {
+    return res.status(400).json({ error: 'description must be 1000 characters or fewer' });
+  }
 
   try {
     const result = await pool.query(
@@ -145,7 +245,11 @@ router.put('/workouts/:id', authMiddleware, requireAdmin, async (req, res) => {
 
 // DELETE workout (Admin only)
 router.delete('/workouts/:id', authMiddleware, requireAdmin, async (req, res) => {
-  const { id } = req.params;
+  const id = parsePositiveInt(req.params.id);
+
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid workout id' });
+  }
 
   try {
     await pool.query('DELETE FROM workouts WHERE id = $1', [id]);
@@ -174,12 +278,25 @@ router.get('/my-habits', authMiddleware, async (req, res) => {
 
 // POST create habit for user
 router.post('/my-habits', authMiddleware, async (req, res) => {
-  const { title, frequency } = req.body;
+  const title = toTrimmedString(req.body?.title);
+  const frequency = toTrimmedString(req.body?.frequency || 'daily').toLowerCase();
+
+  if (!title) {
+    return res.status(400).json({ error: 'title is required' });
+  }
+
+  if (title.length > 120) {
+    return res.status(400).json({ error: 'title must be 1-120 characters' });
+  }
+
+  if (!ALLOWED_FREQUENCIES.has(frequency)) {
+    return res.status(400).json({ error: 'frequency must be daily, weekly, or monthly' });
+  }
 
   try {
     const result = await pool.query(
       'INSERT INTO habits (habit_title, frequency, user_id) VALUES ($1, $2, $3) RETURNING *',
-      [title, frequency || 'daily', req.user.userId]
+      [title, frequency, req.user.userId]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -190,7 +307,11 @@ router.post('/my-habits', authMiddleware, async (req, res) => {
 
 // DELETE remove habit from user
 router.delete('/my-habits/:id', authMiddleware, async (req, res) => {
-  const { id } = req.params;
+  const id = parsePositiveInt(req.params.id);
+
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid habit id' });
+  }
 
   try {
     await pool.query('DELETE FROM habits WHERE id = $1 AND user_id = $2', [id, req.user.userId]);
@@ -219,12 +340,31 @@ router.get('/my-workouts', authMiddleware, async (req, res) => {
 
 // POST log workout
 router.post('/my-workouts', authMiddleware, async (req, res) => {
-  const { workout_id, reps, sets, weight } = req.body;
+  const workoutId = parsePositiveInt(req.body?.workout_id);
+  const reps = parsePositiveIntOrNull(req.body?.reps);
+  const sets = parsePositiveIntOrNull(req.body?.sets);
+  const weight = parseNonNegativeNumber(req.body?.weight);
+
+  if (!workoutId) {
+    return res.status(400).json({ error: 'workout_id must be a positive integer' });
+  }
+
+  if (req.body?.reps !== undefined && reps === null) {
+    return res.status(400).json({ error: 'reps must be a positive integer' });
+  }
+
+  if (req.body?.sets !== undefined && sets === null) {
+    return res.status(400).json({ error: 'sets must be a positive integer' });
+  }
+
+  if (req.body?.weight !== undefined && weight === null) {
+    return res.status(400).json({ error: 'weight must be a non-negative number' });
+  }
 
   try {
     const result = await pool.query(
       'INSERT INTO user_workouts (user_id, workout_id, reps, sets, weight) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [req.user.userId, workout_id, reps, sets, weight]
+      [req.user.userId, workoutId, reps, sets, weight]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -254,7 +394,16 @@ router.get('/daily-log', authMiddleware, async (req, res) => {
 
 // POST toggle habit completion
 router.post('/daily-log', authMiddleware, async (req, res) => {
-  const { habit_id, completed } = req.body;
+  const habitId = parsePositiveInt(req.body?.habit_id);
+  const completed = req.body?.completed;
+
+  if (!habitId) {
+    return res.status(400).json({ error: 'habit_id must be a positive integer' });
+  }
+
+  if (typeof completed !== 'boolean') {
+    return res.status(400).json({ error: 'completed must be a boolean' });
+  }
 
   try {
     const result = await pool.query(
@@ -263,7 +412,7 @@ router.post('/daily-log', authMiddleware, async (req, res) => {
        ON CONFLICT (user_id, habit_id, log_date)
        DO UPDATE SET completed = $3
        RETURNING *`,
-      [req.user.userId, habit_id, completed]
+      [req.user.userId, habitId, completed]
     );
     res.json(result.rows[0]);
   } catch (err) {
