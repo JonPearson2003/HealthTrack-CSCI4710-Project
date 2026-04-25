@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 const API_URL = 'http://localhost:3000';
@@ -7,17 +7,12 @@ export default function Admin() {
   const { token, user } = useContext(AuthContext);
   const [habits, setHabits] = useState([]);
   const [workouts, setWorkouts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showAddHabit, setShowAddHabit] = useState(false);
   const [showAddWorkout, setShowAddWorkout] = useState(false);
   const [newHabit, setNewHabit] = useState({ title: '', frequency: 'daily' });
   const [newWorkout, setNewWorkout] = useState({ title: '', description: '' });
 
-  useEffect(() => {
-    if (token) fetchData();
-  }, [token]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const [habitsRes, workoutsRes] = await Promise.all([
@@ -28,10 +23,14 @@ export default function Admin() {
       setWorkouts(await workoutsRes.json());
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      void fetchData();
+    }
+  }, [token, fetchData]);
 
   const addHabit = async (e) => {
     e.preventDefault();

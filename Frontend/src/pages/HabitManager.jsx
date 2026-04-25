@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 const API_URL = 'http://localhost:3000';
@@ -9,11 +9,7 @@ export default function HabitManager() {
   const [availableHabits, setAvailableHabits] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (token) fetchHabits();
-  }, [token]);
-
-  const fetchHabits = async () => {
+  const fetchHabits = useCallback(async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const [myRes, allRes] = await Promise.all([
@@ -27,7 +23,13 @@ export default function HabitManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      void fetchHabits();
+    }
+  }, [token, fetchHabits]);
 
   const addHabit = async (habit_id) => {
     try {

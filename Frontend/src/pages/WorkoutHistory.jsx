@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 const API_URL = 'http://localhost:3000';
@@ -12,15 +12,11 @@ export default function WorkoutHistory() {
   const [showLogForm, setShowLogForm] = useState(false);
   const [newWorkout, setNewWorkout] = useState({ workout_id: '', sets: '', reps: '', weight: '' });
 
-  useEffect(() => {
+  const fetchWorkouts = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     setError(null);
-    fetchWorkouts();
-  }, [token]);
 
-  const fetchWorkouts = async () => {
-    if (!token) return;
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const [historyRes, libraryRes] = await Promise.all([
@@ -40,7 +36,12 @@ export default function WorkoutHistory() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    void fetchWorkouts();
+  }, [token, fetchWorkouts]);
 
   const logWorkout = async (e) => {
     e.preventDefault();
