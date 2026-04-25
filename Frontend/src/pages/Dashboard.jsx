@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 const API_URL = 'http://localhost:3000';
@@ -9,11 +9,7 @@ export default function Dashboard() {
   const [recentWorkouts, setRecentWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (token) fetchData();
-  }, [token]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const [habitsRes, workoutsRes] = await Promise.all([
@@ -29,7 +25,13 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      void fetchData();
+    }
+  }, [token, fetchData]);
 
   const toggleHabit = async (habit_id, currentCompleted) => {
     try {

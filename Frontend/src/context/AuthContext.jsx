@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext();
 
 const API_URL = 'http://localhost:3000';
@@ -7,20 +8,12 @@ const API_URL = 'http://localhost:3000';
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(localStorage.getItem('token')));
 
-  useEffect(() => {
-    if (token) {
-      fetchSession();
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
-
-  const fetchSession = async () => {
+  async function fetchSession(activeToken) {
     try {
       const res = await fetch(`${API_URL}/users/session`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${activeToken}` },
       });
       if (res.ok) {
         const data = await res.json();
@@ -31,14 +24,24 @@ export function AuthProvider({ children }) {
           role: data.role,
         });
       } else {
-        logout();
+        localStorage.removeItem('token');
+        setToken(null);
+        setUser(null);
       }
     } catch {
-      logout();
+      localStorage.removeItem('token');
+      setToken(null);
+      setUser(null);
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    if (token) {
+      void fetchSession(token);
+    }
+  }, [token]);
 
   const login = async (username, email, password) => {
     const res = await fetch(`${API_URL}/users/login`, {
@@ -75,6 +78,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
+    setLoading(false);
   };
 
   return (
