@@ -12,18 +12,17 @@ function normalizeString(value) {
 }
 
 // GET all users
-router.get('/', authMiddleware, requireAdmin, async (req, res) => {
+router.get('/', authMiddleware, requireAdmin, async (req, res, next) => {
   try {
     const result = await pool.query('SELECT * FROM users');
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // POST create user
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   const username = normalizeString(req.body?.username);
   const email = normalizeString(req.body?.email).toLowerCase();
   const password = typeof req.body?.password === 'string' ? req.body.password : '';
@@ -54,17 +53,15 @@ router.post('/', async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-
     if (err.code === '23505') {
       return res.status(409).json({ error: 'Username or email already exists' });
     }
 
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
   const username = normalizeString(req.body?.username);
   const email = normalizeString(req.body?.email).toLowerCase();
   const password = typeof req.body?.password === 'string' ? req.body.password : '';
@@ -121,13 +118,12 @@ router.post('/login', async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // GET session info (protected route)
-router.get('/session', authMiddleware, async (req, res) => {
+router.get('/session', authMiddleware, async (req, res, next) => {
   try {
     const result = await pool.query(
       'SELECT s.*, u.username, u.email, u.role FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.user_id = $1 AND s.expires_at > NOW() ORDER BY s.created_at DESC LIMIT 1',
@@ -138,21 +134,19 @@ router.get('/session', authMiddleware, async (req, res) => {
     }
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
 // POST logout (invalidate session)
-router.post('/logout', authMiddleware, async (req, res) => {
+router.post('/logout', authMiddleware, async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader.split(' ')[1];
     await pool.query('DELETE FROM sessions WHERE token = $1', [token]);
     res.json({ message: 'Logged out successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 

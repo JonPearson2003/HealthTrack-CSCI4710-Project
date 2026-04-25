@@ -6,6 +6,7 @@ dotenv.config();
 import userRoutes from './routes/users.js';
 import todoRoutes from './routes/todo.js';
 import homeRoutes from './routes/home.js';
+import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
 
@@ -25,6 +26,9 @@ app.use('/home', homeRoutes);
 app.get('/', (req, res) => {
   res.send('Endpoints: /users, /todo, /home');
 });
+
+app.use(notFound);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
