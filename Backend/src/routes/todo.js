@@ -15,6 +15,26 @@ router.get('/', authMiddleware, requireAdmin, async (req, res) => {
   }
 });
 
+// GET admin dashboard metrics (Admin only)
+router.get('/admin/metrics', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const [usersResult, workoutsResult, dailyLogsResult] = await Promise.all([
+      pool.query('SELECT COUNT(*)::int AS count FROM users'),
+      pool.query('SELECT COUNT(*)::int AS count FROM workouts'),
+      pool.query('SELECT COUNT(*)::int AS count FROM daily_logs')
+    ]);
+
+    res.json({
+      usersCount: usersResult.rows[0].count,
+      workoutsCount: workoutsResult.rows[0].count,
+      dailyLogsCount: dailyLogsResult.rows[0].count
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ============ HABITS ============
 
 // GET current user's habits

@@ -13,8 +13,7 @@ router.get('/', authMiddleware, async (req, res) => {
     const result = await pool.query(`
         SELECT h.habit_title AS name
         FROM habits h
-        JOIN user_habits uh ON h.id = uh.habit_id
-        WHERE uh.user_id = $1
+        WHERE h.user_id = $1
 
         UNION
 

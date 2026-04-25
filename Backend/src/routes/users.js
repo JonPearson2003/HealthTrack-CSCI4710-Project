@@ -20,6 +20,11 @@ router.get('/', authMiddleware, requireAdmin, async (req, res) => {
 // POST create user
 router.post('/', async (req, res) => {
   const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'username, email, and password are required' });
+  }
+
   const hashedPassword = await bcryptjs.hash(password, 10);
   const userRole = 'Standard';
 
@@ -31,12 +36,21 @@ router.post('/', async (req, res) => {
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
+
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Username or email already exists' });
+    }
+
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 router.post('/login', async (req, res) => {
   const { username, email, password } = req.body;
+
+  if ((!username && !email) || !password) {
+    return res.status(400).json({ error: 'Provide username or email, and password' });
+  }
 
   try {
     const result = await pool.query(
