@@ -71,18 +71,19 @@ A fitness and habit-tracking web application to help users maintain consistency 
 | POST | `/users/login` | Login (returns JWT) |
 | POST | `/users/logout` | Logout (requires auth) |
 | GET | `/users/session` | Get current session (requires auth) |
-| GET | `/todo/habits` | Get all habits |
-| POST | `/todo/habits` | Create habit (Admin, requires auth) |
-| PUT | `/todo/habits/:id` | Update habit (Admin, requires auth) |
-| DELETE | `/todo/habits/:id` | Delete habit (Admin, requires auth) |
+| GET | `/todo/habits` | Get current user's habits |
+| POST | `/todo/habits` | Create habit for current user |
+| PUT | `/todo/habits/:id` | Update current user's habit |
+| DELETE | `/todo/habits/:id` | Delete current user's habit |
 | GET | `/todo/workouts` | Get all workouts (Exercise Library) |
 | POST | `/todo/workouts` | Create workout (Admin, requires auth) |
-| GET | `/todo/my-habits` | Get user's assigned habits (requires auth) |
-| POST | `/todo/my-habits` | Assign habit to user (requires auth) |
+| GET | `/todo/my-habits` | Get current user's habits (requires auth) |
+| POST | `/todo/my-habits` | Create habit for current user |
 | GET | `/todo/my-workouts` | Get user's workout history (requires auth) |
 | POST | `/todo/my-workouts` | Log a workout (requires auth) |
 | GET | `/todo/daily-log` | Get today's habits with status (requires auth) |
 | POST | `/todo/daily-log` | Toggle habit completion (requires auth) |
+| GET | `/todo/admin/metrics` | Get platform metrics (Admin, requires auth) |
 
 **Authentication:** Include JWT in header: `Authorization: Bearer <token>`
 
