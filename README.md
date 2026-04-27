@@ -112,8 +112,8 @@ A fitness and habit-tracking web application to help users maintain consistency 
 3. Start Frontend: `cd Frontend && npm run dev`
 
 ### Demo Account
-- **Username:** demo
-- **Password:** demo123
+- **Username:** demo@test.com
+- **Password:** demo1234
 
 ### Creating an Admin User
 After registering, update the user's role in the database:
