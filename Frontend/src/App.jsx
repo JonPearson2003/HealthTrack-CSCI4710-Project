@@ -13,7 +13,14 @@ import Profile from './pages/Profile';
 import './App.css';
 
 function Loading() {
-  return <div className="loading">Loading...</div>;
+  return (
+    <div className="app-content">
+      <div className="loading">
+        <div className="loading-spinner"></div>
+        <p className="loading-text">Loading...</p>
+      </div>
+    </div>
+  );
 }
 
 function App() {
