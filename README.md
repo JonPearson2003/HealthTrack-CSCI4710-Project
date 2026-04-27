@@ -28,9 +28,15 @@ A fitness and habit-tracking web application to help users maintain consistency 
    ```
 
 3. **Run the schema:**
-   ```bash
-   psql -d healthtrack -f Backend/schema.sql
-   ```
+    ```bash
+    psql -d healthtrack -f Backend/schema.sql
+    ```
+
+4. **(Optional) Add seed data:**
+    ```bash
+    psql -d healthtrack -f Backend/seed.sql
+    ```
+    Creates sample users (password: `Test1234`), workouts, habits, and logged workouts.
 
 ---
 
@@ -63,7 +69,16 @@ A fitness and habit-tracking web application to help users maintain consistency 
 
 ---
 
-## API Endpoints
+## API Documentation
+
+Full OpenAPI 3.0 specification is available in [`Backend/openapi.yaml`](Backend/openapi.yaml).
+
+You can view the API documentation using:
+- **Swagger Editor**: Paste the YAML content at https://editor.swagger.io/
+- **Redoc**: Use https://redocly.github.io/redoc/
+- **Local tools**: Use `npx @redocly/cli preview-docs Backend/openapi.yaml`
+
+### Quick API Reference
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -132,11 +147,14 @@ HealthTrack/
 │   │   ├── server.js      # Express server
 │   │   ├── db.js        # PostgreSQL connection
 │   │   ├── auth.js     # JWT middleware
+│   │   ├── middleware/
+│   │   │   └── errorHandler.js
 │   │   └── routes/
 │   │       ├── users.js   # User endpoints
 │   │       ├── todo.js  # Habits/Workouts endpoints
 │   │       └── home.js # Home dashboard
 │   ├── schema.sql
+│   ├── openapi.yaml    # API documentation (OpenAPI 3.0)
 │   └── package.json
 ├── Frontend/
 │   ├── src/
