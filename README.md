@@ -80,10 +80,10 @@ You can view the API documentation using:
 
 ### Quick API Reference
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/users` | Register new user |
-| POST | `/users/login` | Login (returns JWT) |
+| Method | Endpoint | Description | Image |
+|--------|----------|-------------|-------|
+| POST | `/users` | Register new user  | ![Backend Started](Images/Backend-Started.png) |
+| POST | `/users/login` | Login (returns JWT) |  |
 | POST | `/users/logout` | Logout (requires auth) |
 | GET | `/users/session` | Get current session (requires auth) |
 | GET | `/todo/habits` | Get current user's habits |
@@ -118,23 +118,28 @@ You can view the API documentation using:
    ```
    Frontend runs at `http://localhost:5173`
 
+   
 ---
 
 ## Running the Application
 
 1. Start PostgreSQL: `sudo service postgresql start`
 2. Start Backend: `cd Backend && npm start`
+![Backend Started](Images/Backend-Started.png)
 3. Start Frontend: `cd Frontend && npm run dev`
+![Frontend Started](Images/Frontend-Terminal.png)
+![Application Running](Images/HealthTrack-Dashboard.png)
 
 ### Demo Account
 - **Username:** demo@test.com
 - **Password:** demo1234
-
+![Create Demo Account](Images/demo-signup.png)
 ### Creating an Admin User
 After registering, update the user's role in the database:
 ```sql
 UPDATE users SET role = 'Admin' WHERE username = 'your_username';
 ```
+![Updating to Admin Account](Images/demo-admin.png)
 
 ---
 
