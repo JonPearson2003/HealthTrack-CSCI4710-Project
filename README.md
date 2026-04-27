@@ -80,9 +80,9 @@ You can view the API documentation using:
 
 ### Quick API Reference
 
-| Method | Endpoint | Description | Image |
-|--------|----------|-------------|-------|
-| POST | `/users` | Register new user  | ![Backend Started](Images/Backend-Started.png) |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/users` | Register new user  |
 | POST | `/users/login` | Login (returns JWT) |  |
 | POST | `/users/logout` | Logout (requires auth) |
 | GET | `/users/session` | Get current session (requires auth) |
