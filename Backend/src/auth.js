@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import pool from './db.js';
 
-const SECRET = process.env.JWT_SECRET || 'your_secret_key';
+const SECRET = process.env.JWT_SECRET;
 
 export async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -11,9 +11,13 @@ export async function authMiddleware(req, res, next) {
   }
 
   const token = authHeader.split(' ')[1];
+  console.log("VERIFY SECRET:", SECRET);
+  console.log("AUTH HEADER:", req.headers.authorization);
 
   try {
     const decoded = jwt.verify(token, SECRET);
+    console.log("DECODED USER:", decoded.userId);
+    console.log("TOKEN CHECK:", token);
     const result = await pool.query(
       `SELECT u.id AS "userId", u.username, u.email, u.role
        FROM sessions s
@@ -25,6 +29,8 @@ export async function authMiddleware(req, res, next) {
       [token, decoded.userId]
     );
 
+    console.log("SESSION QUERY RESULT:", result.rows);
+
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid token' });
     }
@@ -32,6 +38,7 @@ export async function authMiddleware(req, res, next) {
     req.user = result.rows[0];
     next();
   } catch (err) {
+    console.error("JWT ERROR:", err.message);
     return res.status(401).json({ error: 'Invalid token' });
   }
 }

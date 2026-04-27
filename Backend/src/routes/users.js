@@ -94,9 +94,10 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ error: 'Incorrect password' });
     }
     console.log("LOGIN USER:", user);
+    console.log("LOGIN SECRET:", process.env.JWT_SECRET);
     const token = jwt.sign(
       { userId: user.id },
-      process.env.JWT_SECRET || 'your_secret_key',
+      process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
@@ -116,6 +117,7 @@ router.post('/login', async (req, res, next) => {
         role: user.role
       }
     });
+
 
   } catch (err) {
     next(err);

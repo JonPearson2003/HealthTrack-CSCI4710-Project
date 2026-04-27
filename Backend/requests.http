@@ -8,9 +8,10 @@ POST http://localhost:3000/users
 Content-Type: application/json
 
 {
-  "username": "testuser",
-  "email": "testuser@example.com",
-  "password": "password123"
+  "username": "admin",
+  "email": "admin@admin.com",
+  "password": "password123",
+  "role": "Admin"
 }
 ###
 

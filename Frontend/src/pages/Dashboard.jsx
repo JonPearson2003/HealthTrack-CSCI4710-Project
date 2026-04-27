@@ -12,8 +12,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    console.log("fetchData called");  
     try {
       const headers = { Authorization: `Bearer ${token}` };
+      console.log("TOKEN:", token);
       const [habitsRes, workoutsRes] = await Promise.all([
         fetch(`${API_URL}/todo/daily-log`, { headers }),
         fetch(`${API_URL}/todo/my-workouts`, { headers }),
@@ -21,6 +23,7 @@ export default function Dashboard() {
       const habitsData = await habitsRes.json();
       const workoutsData = await workoutsRes.json();
       setDailyHabits(habitsData);
+      console.log("workoutsData:", workoutsData); //bug fixing
       setRecentWorkouts(workoutsData.slice(0, 5));
     } catch (err) {
       console.error(err);
