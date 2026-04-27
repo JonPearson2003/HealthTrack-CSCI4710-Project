@@ -9,6 +9,9 @@ export default function HabitManager() {
   const [myHabits, setMyHabits] = useState([]);
   const [availableHabits, setAvailableHabits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newHabitTitle, setNewHabitTitle] = useState('');
+  const [newHabitFrequency, setNewHabitFrequency] = useState('daily');
+  const [creatingHabit, setCreatingHabit] = useState(false);
 
   const fetchHabits = useCallback(async () => {
     try {
@@ -60,6 +63,44 @@ export default function HabitManager() {
     }
   };
 
+  const createNewHabit = async (e) => {
+    e.preventDefault();
+    if (!newHabitTitle.trim()) {
+      alert('Please enter a habit title');
+      return;
+    }
+    
+    setCreatingHabit(true);
+    try {
+      const response = await fetch(`${API_URL}/todo/my-habits`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          title: newHabitTitle, 
+          frequency: newHabitFrequency 
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+        return;
+      }
+      
+      setNewHabitTitle('');
+      setNewHabitFrequency('daily');
+      fetchHabits();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to create habit');
+    } finally {
+      setCreatingHabit(false);
+    }
+  };
+
   const myHabitIds = myHabits.map(h => h.id);
 
   if (loading) {
@@ -81,6 +122,48 @@ export default function HabitManager() {
       </div>
 
       <div className="habit-manager-grid">
+        <div className="card">
+          <div className="card-header">
+            <h2>Create New Habit</h2>
+          </div>
+          <div className="card-body">
+            <form onSubmit={createNewHabit} className="habit-form">
+              <div className="form-group">
+                <label htmlFor="habit-title">Habit Name</label>
+                <input
+                  id="habit-title"
+                  type="text"
+                  placeholder="e.g., Morning meditation, Read a chapter..."
+                  value={newHabitTitle}
+                  onChange={(e) => setNewHabitTitle(e.target.value)}
+                  maxLength="120"
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="habit-frequency">Frequency</label>
+                <select
+                  id="habit-frequency"
+                  value={newHabitFrequency}
+                  onChange={(e) => setNewHabitFrequency(e.target.value)}
+                  className="form-select"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <button 
+                type="submit" 
+                className="btn btn-primary"
+                disabled={creatingHabit}
+              >
+                {creatingHabit ? 'Creating...' : 'Create Habit'}
+              </button>
+            </form>
+          </div>
+        </div>
+
         <div className="card">
           <div className="card-header">
             <h2>My Habits</h2>
