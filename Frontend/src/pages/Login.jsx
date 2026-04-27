@@ -16,7 +16,12 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await login(identifier, identifier, password);
+      // Determine if identifier is email or username
+      const isEmail = identifier.includes('@');
+      const username = isEmail ? '' : identifier;
+      const email = isEmail ? identifier : '';
+      
+      await login(username, email, password);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
