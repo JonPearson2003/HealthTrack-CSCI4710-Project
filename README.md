@@ -74,7 +74,7 @@ A fitness and habit-tracking web application to help users maintain consistency 
 Full OpenAPI 3.0 specification is available in [`Backend/openapi.yaml`](Backend/openapi.yaml).
 
 You can view the API documentation using:
-- **Swagger Editor**: Paste the YAML content at https://editor.swagger.io/
+- **Swagger Editor**: Paste the YAML content at https://editor.swagger.io/ or while backend is running at http://localhost:3000/api-docs/
 - **Redoc**: Use https://redocly.github.io/redoc/
 - **Local tools**: Use `npx @redocly/cli preview-docs Backend/openapi.yaml`
 
