@@ -23,10 +23,15 @@ A fitness and habit-tracking web application to help users maintain consistency 
 2. **Create user and database:**
    ```bash
    sudo -u postgres createuser postgres -s
+   ```
+   ```bash
    sudo -u postgres createdb healthtrack
-   sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
    ```
    ![Create database](Images/create-db.png)
+
+   ```bash
+   sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
+   ```
    ![Change password](Images/change-password.png)
 3. **Run the schema:**
     ```bash
