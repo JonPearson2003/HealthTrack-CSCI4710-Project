@@ -26,18 +26,21 @@ A fitness and habit-tracking web application to help users maintain consistency 
    sudo -u postgres createdb healthtrack
    sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
    ```
-
+   ![Create database](Images/create-db.png)
+   ![Change password](Images/change-password.png)
 3. **Run the schema:**
     ```bash
     psql -d healthtrack -f Backend/schema.sql
     ```
+    ![Load ](Images/run-schema.png)
 
 4. **(Optional) Add seed data:**
     ```bash
     psql -d healthtrack -f Backend/seed.sql
     ```
     Creates sample users (password: `Test1234`), workouts, habits, and logged workouts.
-
+   
+   ![Seed data](Images/insert-seed-data.png)
 ---
 
 ## Backend Setup
@@ -47,6 +50,7 @@ A fitness and habit-tracking web application to help users maintain consistency 
    cd Backend
    npm install
    ```
+   ![Backend dependencies](Images/backend-dependencies.png)
 
 2. **Configure environment:**
    
@@ -67,8 +71,10 @@ A fitness and habit-tracking web application to help users maintain consistency 
    ```
    Server runs at `http://localhost:3000`
 
----
+   ![Backend Started](Images/Backend-Started.png)
 
+---
+   
 ## API Documentation
 
 Full OpenAPI 3.0 specification is available in [`Backend/openapi.yaml`](Backend/openapi.yaml).
@@ -111,14 +117,17 @@ You can view the API documentation using:
    cd Frontend
    npm install
    ```
-
+   ![Frontend dependencies](Images/frontend-dependencies.png)
+]
 2. **Start the development server:**
    ```bash
    npm run dev
    ```
    Frontend runs at `http://localhost:5173`
 
-   
+   ![Frontend Started](Images/Frontend-terminal.png)
+
+
 ---
 
 ## Running the Application
